@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>2Fort Proxy — 404</title>
+  <link rel="icon" href="/logo.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;600;700&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <style>
+    .err-page {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 4rem 2rem;
+    }
+    .err-logo { width: 110px; height: 110px; object-fit: contain; opacity: 0.18; margin-bottom: 1.5rem; }
+    .err-code {
+      font-family: var(--font-hd); font-size: 7rem; font-weight: 700;
+      color: var(--orange); line-height: 1; letter-spacing: 8px;
+    }
+    .err-msg {
+      font-family: var(--font-hd); font-size: 1.6rem;
+      letter-spacing: 4px; color: var(--cream);
+      margin: 0.5rem 0 0.3rem;
+    }
+    .err-sub { font-family: var(--font-body); color: var(--dim); font-size: 0.9rem; margin-bottom: 2rem; }
+    .err-btn {
+      background: var(--orange); border: none; color: #1a0900;
+      font-family: var(--font-hd); font-size: 1.1rem; font-weight: 700;
+      letter-spacing: 2px; padding: 0.6rem 2rem; cursor: pointer; text-decoration: none;
+    }
+    .err-btn:hover { background: var(--gold); }
+  </style>
+  <script>
+    // GitHub Pages SPA redirect trick
+    const path = sessionStorage.getItem('2fp-redirect');
+    if (path) { sessionStorage.removeItem('2fp-redirect'); window.location.replace(path); }
+  </script>
+</head>
+<body>
+  <div class="scanlines"></div>
+  <div class="page-wrapper">
+    <header class="site-header">
+      <div class="logo-lockup">
+        <img src="/logo.png" alt="2Fort Proxy" class="site-logo"/>
+        <div class="logo-text">
+          <span class="logo-title">2FORT</span>
+          <span class="logo-sub">PROXY</span>
+        </div>
+      </div>
+      <nav class="site-nav">
+        <a href="/index.html" class="nav-link">HOME</a>
+      </nav>
+    </header>
+
+    <div class="err-page">
+      <img src="/logo.png" alt="" class="err-logo"/>
+      <div class="err-code">404</div>
+      <div class="err-msg">INTEL NOT FOUND</div>
+      <div class="err-sub">The page you're looking for doesn't exist or has been moved.</div>
+      <a href="/index.html" class="err-btn">RETURN TO BASE</a>
+    </div>
+
+    <footer class="site-footer">
+      <img src="/logo.png" alt="" class="footer-logo"/>
+      <span>2FORT PROXY</span>
+    </footer>
+  </div>
+</body>
+</html>

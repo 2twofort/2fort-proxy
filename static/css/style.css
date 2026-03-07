@@ -1,0 +1,201 @@
+/* ============================================================
+   2FORT PROXY — STYLESHEET
+   TF2-inspired industrial war aesthetic
+   ============================================================ */
+
+:root {
+  --bg:        #1a1108;
+  --bg2:       #231608;
+  --bg3:       #2c1c0a;
+  --panel:     #1e1409;
+  --border:    #5c3d12;
+  --border2:   #7a5218;
+  --orange:    #c4831a;
+  --gold:      #e8a83a;
+  --cream:     #f0deb0;
+  --dim:       #9a8060;
+  --rust:      #8b3a10;
+  --red:       #c0392b;
+  --green:     #5dbb63;
+  --shadow:    rgba(196,131,26,0.2);
+  --glow:      rgba(232,168,58,0.5);
+  --font-hd:   'Teko', sans-serif;
+  --font-body: 'Special Elite', cursive;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--cream);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+/* ── Atmospheric overlays ── */
+.scanlines {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  background: repeating-linear-gradient(
+    to bottom, transparent 0px, transparent 3px,
+    rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px
+  );
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(196,131,26,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(196,131,26,0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Vignette */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.65) 100%);
+}
+
+/* ── Page scaffold ── */
+.page-wrapper {
+  position: relative; z-index: 2;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+}
+
+/* ── Header ── */
+.site-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2.5rem; height: 68px;
+  background: linear-gradient(180deg, #2e1c08 0%, #1a1108 100%);
+  border-bottom: 2px solid var(--orange);
+  box-shadow: 0 2px 0 var(--border2), 0 4px 30px rgba(0,0,0,0.6);
+  position: relative; z-index: 100;
+}
+
+/* double-rule effect */
+.site-header::after {
+  content: '';
+  position: absolute; bottom: -5px; left: 0; right: 0; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
+  opacity: 0.35;
+}
+
+.logo-lockup {
+  display: flex; align-items: center; gap: 0.75rem;
+  text-decoration: none;
+}
+
+.site-logo {
+  width: 42px; height: 42px; object-fit: contain;
+  opacity: 0.82;
+  filter: drop-shadow(0 0 7px rgba(196,131,26,0.55));
+  transition: opacity 0.25s, filter 0.25s;
+}
+.site-logo:hover { opacity: 1; filter: drop-shadow(0 0 14px var(--glow)); }
+
+.logo-text { display: flex; flex-direction: column; line-height: 1; }
+.logo-title {
+  font-family: var(--font-hd); font-size: 1.75rem; font-weight: 700;
+  color: var(--orange); letter-spacing: 3px;
+}
+.logo-sub {
+  font-family: var(--font-hd); font-size: 0.75rem; font-weight: 400;
+  color: var(--dim); letter-spacing: 5px;
+}
+
+.site-nav { display: flex; gap: 0; }
+.nav-link {
+  font-family: var(--font-hd); font-size: 0.95rem; font-weight: 600;
+  letter-spacing: 2px; color: var(--dim);
+  text-decoration: none; padding: 0.35rem 1rem;
+  border: 1px solid transparent;
+  transition: all 0.18s;
+}
+.nav-link:hover { color: var(--cream); background: rgba(196,131,26,0.1); border-color: var(--border); }
+.nav-link.active { color: var(--orange); border-color: var(--orange); background: rgba(196,131,26,0.13); }
+
+/* ── Accent ── */
+.accent { color: var(--orange); }
+
+/* ── Divider ── */
+.tf2-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border2), transparent);
+  margin: 2rem 0;
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  background: var(--orange); border: none; color: #1a0900;
+  font-family: var(--font-hd); font-size: 1.05rem; font-weight: 700;
+  letter-spacing: 2px; padding: 0.55rem 1.8rem;
+  cursor: pointer; transition: all 0.18s;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+}
+.btn-primary:hover { background: var(--gold); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(196,131,26,0.35); }
+.btn-primary:active { transform: translateY(0); }
+
+/* ── Footer ── */
+.site-footer {
+  display: flex; align-items: center; justify-content: center;
+  gap: 1rem; padding: 1rem 2rem;
+  border-top: 1px solid var(--border);
+  background: linear-gradient(0deg, #0f0900, transparent);
+  font-family: var(--font-hd); font-size: 0.85rem;
+  letter-spacing: 2px; color: var(--dim);
+  position: relative; z-index: 10;
+}
+.footer-logo { width: 22px; height: 22px; object-fit: contain; opacity: 0.5; }
+.footer-note { font-size: 0.7rem; color: #665544; }
+
+/* ── Inputs ── */
+input[type=text], input[type=url], select {
+  background: rgba(0,0,0,0.45); border: 1px solid var(--border);
+  color: var(--cream); font-family: var(--font-body); font-size: 0.9rem;
+  padding: 0.55rem 0.9rem;
+  outline: none; transition: border-color 0.2s;
+  width: 100%;
+}
+input[type=text]:focus, input[type=url]:focus, select:focus { border-color: var(--orange); }
+select option { background: #1a1108; }
+
+/* ── Status dots ── */
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot-ok  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.dot-bad { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+.dot-idle{ background: var(--dim); }
+
+/* ── Page title style ── */
+.page-heading {
+  font-family: var(--font-hd); font-size: 2.2rem; font-weight: 700;
+  letter-spacing: 3px; color: var(--cream);
+  margin-bottom: 1.8rem;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--orange); }
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes flicker {
+  0%,100% { opacity:1; } 92% { opacity:1; } 93% { opacity:0.7; } 94% { opacity:1; } 97% { opacity:0.85; }
+}
+@keyframes pulse-dot {
+  0%,100% { box-shadow: 0 0 5px currentColor; }
+  50%      { box-shadow: 0 0 12px currentColor; }
+}
+
+.anim-fade-up { animation: fadeUp 0.55s ease both; }
+.anim-delay-1 { animation-delay: 0.1s; }
+.anim-delay-2 { animation-delay: 0.2s; }
+.anim-delay-3 { animation-delay: 0.3s; }
+.anim-delay-4 { animation-delay: 0.4s; }
