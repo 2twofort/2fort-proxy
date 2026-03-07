@@ -44,7 +44,7 @@ function navigate(url) {
 }
 
 function hideSplash() {
-  splash.classList.add('hidden');
+  splash.style.display = 'none';
 }
 
 function setLock(url) {
