@@ -125,19 +125,15 @@
     document.getElementById('barLogo').src=LOGO;
     document.getElementById('splashLogo').src=LOGO;
   </script>
-<script src="scramjet/scramjet.codecs.js"></script>
-  <script src="scramjet/scramjet.shared.js"></script>
-  <script src="scramjet/scramjet.client.js"></script>
+<script src="scramjet/scramjet.bundle.js"></script>
   <script>
     const controller = new ScramjetController({
       prefix: '/2fort-proxy/service/',
       wispServer: 'wss://proxy.2fort.lol/wisp/',
       files: {
-        wasm:   '/2fort-proxy/scramjet/scramjet.wasm',
-        worker: '/2fort-proxy/scramjet/scramjet.worker.js',
-        client: '/2fort-proxy/scramjet/scramjet.client.js',
-        shared: '/2fort-proxy/scramjet/scramjet.shared.js',
-        codecs: '/2fort-proxy/scramjet/scramjet.codecs.js',
+        wasm: '/2fort-proxy/scramjet/scramjet.wasm.wasm',
+        all:  '/2fort-proxy/scramjet/scramjet.all.js',
+        sync: '/2fort-proxy/scramjet/scramjet.sync.js',
       },
     });
     controller.init().then(() => {
