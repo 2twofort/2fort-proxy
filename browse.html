@@ -138,24 +138,10 @@
         sync: '/2fort-proxy/scramjet/scramjet.sync.js',
       },
     });
-
-    try {
-      await controller.init();
-    } catch(e) {
-      console.warn('[2Fort] IDB init failed, wiping...', e);
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
-      await new Promise(r => {
-        const req = indexedDB.deleteDatabase('$scramjet');
-        req.onsuccess = req.onerror = req.onblocked = r;
-      });
-      await controller.init();
-    }
-
+    await controller.init();
     const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
     await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
     window.__scramjet = controller;
-
     if (navigator.serviceWorker.controller) {
       console.log('[2Fort] Scramjet ready');
       window.dispatchEvent(new Event('scramjet-ready'));
