@@ -10,10 +10,6 @@ async function handleRequest(event) {
   try {
     await scramjet.loadConfig();
   } catch (e) {
-    await new Promise(r => {
-      const req = indexedDB.deleteDatabase('$scramjet');
-      req.onsuccess = req.onerror = req.onblocked = r;
-    });
     return fetch(event.request);
   }
   if (scramjet.route(event)) {
