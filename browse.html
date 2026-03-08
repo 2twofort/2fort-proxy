@@ -128,22 +128,23 @@
 <script src="scramjet/bare-mux.js"></script>
   <script src="scramjet/scramjet.all.js"></script>
   <script>
-    const { ScramjetController } = $scramjetLoadController();
-    const controller = new ScramjetController({
-      prefix: '/2fort-proxy/service/',
-      files: {
-        wasm: '/2fort-proxy/scramjet/scramjet.wasm.wasm',
-        all:  '/2fort-proxy/scramjet/scramjet.all.js',
-        sync: '/2fort-proxy/scramjet/scramjet.sync.js',
-      },
-    });
-    controller.init().then(async () => {
-      const conn = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
-      await conn.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ wisp: 'wss://proxy.2fort.lol/wisp/' }]);
+    (async () => {
+      const { ScramjetController } = $scramjetLoadController();
+      const controller = new ScramjetController({
+        prefix: '/2fort-proxy/service/',
+        files: {
+          wasm: '/2fort-proxy/scramjet/scramjet.wasm.wasm',
+          all:  '/2fort-proxy/scramjet/scramjet.all.js',
+          sync: '/2fort-proxy/scramjet/scramjet.sync.js',
+        },
+      });
+      await controller.init();
+      const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
+      await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ wisp: 'wss://proxy.2fort.lol/wisp/' }]);
       window.__scramjet = controller;
       console.log('[2Fort] Scramjet ready');
       window.dispatchEvent(new Event('scramjet-ready'));
-    });
+    })();
   </script>
   <script src="static/js/browse.js"></script>
   <script src="static/js/register-sw.js"></script>
