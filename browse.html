@@ -129,6 +129,11 @@
 <script src="scramjet/scramjet.all.js"></script>
 <script>
   (async () => {
+    await new Promise(r => {
+      const req = indexedDB.deleteDatabase('$scramjet');
+      req.onsuccess = req.onerror = req.onblocked = r;
+    });
+
     const { ScramjetController } = $scramjetLoadController();
     const controller = new ScramjetController({
       prefix: '/2fort-proxy/service/',
@@ -138,15 +143,17 @@
         sync: '/2fort-proxy/scramjet/scramjet.sync.js',
       },
     });
+
     await controller.init();
+
     const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
     await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
     window.__scramjet = controller;
+
     if (navigator.serviceWorker.controller) {
       console.log('[2Fort] Scramjet ready');
       window.dispatchEvent(new Event('scramjet-ready'));
     } else {
-      console.log('[2Fort] Waiting for SW to take control...');
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         location.reload();
       }, { once: true });
