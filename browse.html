@@ -125,11 +125,13 @@
     document.getElementById('barLogo').src=LOGO;
     document.getElementById('splashLogo').src=LOGO;
   </script>
-<script type="module">
+<script src="scramjet/bare-mux.js"></script>
+  <script type="module">
     import { ScramjetController } from '/2fort-proxy/scramjet/scramjet.bundle.js';
+    const wt = new BareMux.WispTransport("wss://proxy.2fort.lol/wisp/");
+    await BareMux.SetTransport("WispTransport", wt);
     const controller = new ScramjetController({
       prefix: '/2fort-proxy/service/',
-      wispServer: 'wss://proxy.2fort.lol/wisp/',
       files: {
         wasm: '/2fort-proxy/scramjet/scramjet.wasm.wasm',
         all:  '/2fort-proxy/scramjet/scramjet.all.js',
