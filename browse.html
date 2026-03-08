@@ -126,54 +126,56 @@
     document.getElementById('splashLogo').src=LOGO;
   </script>
 <script src="scramjet/bare-mux.js"></script>
-  <script src="scramjet/scramjet.all.js"></script>
-  <script>
-    (async () => {
-      const { ScramjetController } = $scramjetLoadController();
-      const controller = new ScramjetController({
-        prefix: '/2fort-proxy/service/',
-        files: {
-          wasm: '/2fort-proxy/scramjet/scramjet.wasm.wasm',
-          all:  '/2fort-proxy/scramjet/scramjet.all.js',
-          sync: '/2fort-proxy/scramjet/scramjet.sync.js',
-        },
-      });
+<script src="scramjet/scramjet.all.js"></script>
+<script>
+  (async () => {
+    const { ScramjetController } = $scramjetLoadController();
+    const controller = new ScramjetController({
+      prefix: '/2fort-proxy/service/',
+      files: {
+        wasm: '/2fort-proxy/scramjet/scramjet.wasm.wasm',
+        all:  '/2fort-proxy/scramjet/scramjet.all.js',
+        sync: '/2fort-proxy/scramjet/scramjet.sync.js',
+      },
+    });
 
-      try {
-        await controller.init();
-        sessionStorage.removeItem('sj-idb-wiped');
-      } catch(e) {
-        if (!sessionStorage.getItem('sj-idb-wiped')) {
-          console.warn('[2Fort] IDB init failed, wiping and reloading...', e);
-          sessionStorage.setItem('sj-idb-wiped', '1');
-          await new Promise(r => {
-            const req = indexedDB.deleteDatabase('$scramjet');
-            req.onsuccess = req.onerror = req.onblocked = r;
-          });
-          location.reload();
-          return;
-        } else {
-          console.error('[2Fort] IDB failed even after wipe, continuing without config...');
-        }
-      }
-
-      const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
-      await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
-      window.__scramjet = controller;
-
-      if (navigator.serviceWorker.controller) {
-        console.log('[2Fort] Scramjet ready');
-        window.dispatchEvent(new Event('scramjet-ready'));
+    try {
+      await controller.init();
+      sessionStorage.removeItem('sj-idb-wiped');
+    } catch(e) {
+      if (!sessionStorage.getItem('sj-idb-wiped')) {
+        console.warn('[2Fort] IDB init failed, unregistering SW, wiping IDB, reloading...', e);
+        sessionStorage.setItem('sj-idb-wiped', '1');
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+        await new Promise(r => {
+          const req = indexedDB.deleteDatabase('$scramjet');
+          req.onsuccess = req.onerror = req.onblocked = r;
+        });
+        location.reload();
+        return;
       } else {
-        console.log('[2Fort] Waiting for SW to take control...');
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          location.reload();
-        }, { once: true });
+        console.error('[2Fort] IDB still failing after wipe, giving up.');
       }
-    })();
-  </script>
-  <script src="static/js/browse.js"></script>
-  <script src="static/js/register-sw.js"></script>
-  <script src="static/js/config.js"></script>
+    }
+
+    const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
+    await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
+    window.__scramjet = controller;
+
+    if (navigator.serviceWorker.controller) {
+      console.log('[2Fort] Scramjet ready');
+      window.dispatchEvent(new Event('scramjet-ready'));
+    } else {
+      console.log('[2Fort] Waiting for SW to take control...');
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        location.reload();
+      }, { once: true });
+    }
+  })();
+</script>
+<script src="static/js/browse.js"></script>
+<script src="static/js/register-sw.js"></script>
+<script src="static/js/config.js"></script>
 </body>
 </html>
