@@ -128,37 +128,50 @@
 <script src="scramjet/bare-mux.js"></script>
 <script src="scramjet/scramjet.all.js"></script>
 <script>
-  (async () => {
+(async () => {
+  const { ScramjetController } = $scramjetLoadController();
+  const controller = new ScramjetController({
+    prefix: '/2fort-proxy/service/',
+    files: {
+      wasm: '/2fort-proxy/scramjet/scramjet.wasm.wasm',
+      all:  '/2fort-proxy/scramjet/scramjet.all.js',
+      sync: '/2fort-proxy/scramjet/scramjet.sync.js',
+    },
+  });
+
+  try {
+    await controller.init();
+  } catch(e) {
+    console.warn('[2Fort] IDB init failed, resetting...', e);
+    // Kill SW first so it releases its IDB connection
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map(r => r.unregister()));
+    // Now delete succeeds without being blocked
     await new Promise(r => {
       const req = indexedDB.deleteDatabase('$scramjet');
       req.onsuccess = req.onerror = req.onblocked = r;
     });
-
-    const { ScramjetController } = $scramjetLoadController();
-    const controller = new ScramjetController({
-      prefix: '/2fort-proxy/service/',
-      files: {
-        wasm: '/2fort-proxy/scramjet/scramjet.wasm.wasm',
-        all:  '/2fort-proxy/scramjet/scramjet.all.js',
-        sync: '/2fort-proxy/scramjet/scramjet.sync.js',
-      },
-    });
-
+    // Re-init with clean IDB, no SW running to interfere
     await controller.init();
+    console.log('[2Fort] IDB reset successful');
+  }
 
-    const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
-    await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
+  const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
+  await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
+
+  // Only set __scramjet and fire scramjet-ready once SW is actually controlling
+  if (navigator.serviceWorker.controller) {
     window.__scramjet = controller;
-
-    if (navigator.serviceWorker.controller) {
-      console.log('[2Fort] Scramjet ready');
+    console.log('[2Fort] Scramjet ready');
+    window.dispatchEvent(new Event('scramjet-ready'));
+  } else {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.__scramjet = controller;
+      console.log('[2Fort] Scramjet ready (SW took control)');
       window.dispatchEvent(new Event('scramjet-ready'));
-    } else {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        location.reload();
-      }, { once: true });
-    }
-  })();
+    }, { once: true });
+  }
+})();
 </script>
 <script src="static/js/browse.js"></script>
 <script src="static/js/register-sw.js"></script>
