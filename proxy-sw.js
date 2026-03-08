@@ -3,6 +3,9 @@ importScripts('/2fort-proxy/scramjet/scramjet.all.js');
 const { ScramjetServiceWorker } = $scramjetLoadWorker();
 const scramjet = new ScramjetServiceWorker();
 
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+
 async function handleRequest(event) {
   try {
     await scramjet.loadConfig();
