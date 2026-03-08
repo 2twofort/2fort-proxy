@@ -141,6 +141,7 @@
     await controller.init();
     window.__scramjet = controller;
     console.log('[2Fort] Scramjet ready');
+    window.dispatchEvent(new Event('scramjet-ready'));
   </script>
   <script src="static/js/browse.js"></script>
   <script src="static/js/register-sw.js"></script>
