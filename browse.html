@@ -129,6 +129,18 @@
 <script src="scramjet/scramjet.all.js"></script>
 <script>
 (async () => {
+  // Unregister SW first so it releases its IDB connection
+  const regs = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(regs.map(r => r.unregister()));
+
+  // Delete stale IDB — no SW holding it now
+  await new Promise(r => {
+    const req = indexedDB.deleteDatabase('$scramjet');
+    req.onsuccess = r;
+    req.onerror = r;
+    req.onblocked = r;
+  });
+
   const { ScramjetController } = $scramjetLoadController();
   const controller = new ScramjetController({
     prefix: '/2fort-proxy/service/',
@@ -139,31 +151,16 @@
     },
   });
 
-  try {
-    await controller.init();
-    sessionStorage.removeItem('sj-reset');
-  } catch(e) {
-    console.warn('[2Fort] IDB init failed:', e.message);
-    if (!sessionStorage.getItem('sj-reset')) {
-      sessionStorage.setItem('sj-reset', '1');
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
-      // Wait for actual delete success — onblocked means SW still holds it, so we wait
-      await new Promise((resolve) => {
-        const req = indexedDB.deleteDatabase('$scramjet');
-        req.onsuccess = () => { console.log('[2Fort] IDB deleted'); resolve(); };
-        req.onerror = resolve;
-        req.onblocked = () => console.warn('[2Fort] IDB delete blocked, waiting for SW to release...');
-        setTimeout(resolve, 3000); // fallback
-      });
-      location.reload();
-      return;
-    }
-    console.error('[2Fort] IDB still broken after reset');
-  }
+  await controller.init();
+  console.log('[2Fort] IDB init OK');
 
   const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
   await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
+  console.log('[2Fort] Transport set');
+
+  // Re-register SW after everything is ready
+  const reg = await navigator.serviceWorker.register('/2fort-proxy/proxy-sw.js', { scope: '/2fort-proxy/' });
+  console.log('[2Fort] SW registered:', reg.scope);
 
   if (navigator.serviceWorker.controller) {
     window.__scramjet = controller;
@@ -172,14 +169,13 @@
   } else {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       window.__scramjet = controller;
-      console.log('[2Fort] Scramjet ready (after SW claim)');
+      console.log('[2Fort] Scramjet ready (after claim)');
       window.dispatchEvent(new Event('scramjet-ready'));
     }, { once: true });
   }
 })();
 </script>
 <script src="static/js/browse.js"></script>
-<script src="static/js/register-sw.js"></script>
 <script src="static/js/config.js"></script>
 </body>
 </html>
