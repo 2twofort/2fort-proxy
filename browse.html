@@ -129,11 +129,6 @@
 <script src="scramjet/scramjet.all.js"></script>
 <script>
 (async () => {
-  await new Promise(r => {
-    const req = indexedDB.deleteDatabase('$scramjet');
-    req.onsuccess = req.onerror = req.onblocked = r;
-  });
-
   const { ScramjetController } = $scramjetLoadController();
   const controller = new ScramjetController({
     prefix: '/2fort-proxy/service/',
@@ -144,7 +139,28 @@
     },
   });
 
-  await controller.init();
+  try {
+    await controller.init();
+    sessionStorage.removeItem('sj-reset');
+  } catch(e) {
+    console.warn('[2Fort] IDB init failed:', e.message);
+    if (!sessionStorage.getItem('sj-reset')) {
+      sessionStorage.setItem('sj-reset', '1');
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+      // Wait for actual delete success — onblocked means SW still holds it, so we wait
+      await new Promise((resolve) => {
+        const req = indexedDB.deleteDatabase('$scramjet');
+        req.onsuccess = () => { console.log('[2Fort] IDB deleted'); resolve(); };
+        req.onerror = resolve;
+        req.onblocked = () => console.warn('[2Fort] IDB delete blocked, waiting for SW to release...');
+        setTimeout(resolve, 3000); // fallback
+      });
+      location.reload();
+      return;
+    }
+    console.error('[2Fort] IDB still broken after reset');
+  }
 
   const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
   await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
