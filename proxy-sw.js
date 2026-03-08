@@ -1,23 +1,10 @@
-importScripts('/2fort-proxy/scramjet/scramjet.all.js');
-
-const { ScramjetServiceWorker } = $scramjetLoadWorker();
-const scramjet = new ScramjetServiceWorker();
-
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-
-async function handleRequest(event) {
+'use strict';
+(async function () {
+  if (!('serviceWorker' in navigator)) return;
   try {
-    await scramjet.loadConfig();
-  } catch (e) {
-    return fetch(event.request);
+    const reg = await navigator.serviceWorker.register('/2fort-proxy/proxy-sw.js', { scope: '/2fort-proxy/' });
+    console.log('[2Fort] SW registered:', reg.scope);
+  } catch (err) {
+    console.warn('[2Fort] SW registration failed:', err.message);
   }
-  if (scramjet.route(event)) {
-    return scramjet.fetch(event);
-  }
-  return fetch(event.request);
-}
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(handleRequest(event));
-});
+})();
