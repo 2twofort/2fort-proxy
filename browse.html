@@ -141,14 +141,20 @@
 
       try {
         await controller.init();
+        sessionStorage.removeItem('sj-idb-wiped');
       } catch(e) {
-        console.warn('[2Fort] IDB init failed, wiping and reloading...', e);
-        await new Promise(r => {
-          const req = indexedDB.deleteDatabase('$scramjet');
-          req.onsuccess = req.onerror = req.onblocked = r;
-        });
-        location.reload();
-        return;
+        if (!sessionStorage.getItem('sj-idb-wiped')) {
+          console.warn('[2Fort] IDB init failed, wiping and reloading...', e);
+          sessionStorage.setItem('sj-idb-wiped', '1');
+          await new Promise(r => {
+            const req = indexedDB.deleteDatabase('$scramjet');
+            req.onsuccess = req.onerror = req.onblocked = r;
+          });
+          location.reload();
+          return;
+        } else {
+          console.error('[2Fort] IDB failed even after wipe, continuing without config...');
+        }
       }
 
       const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
