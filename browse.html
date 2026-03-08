@@ -141,25 +141,26 @@
 
   try {
     await controller.init();
+    sessionStorage.removeItem('sj-reset');
   } catch(e) {
-    console.warn('[2Fort] IDB init failed, resetting...', e);
-    // Kill SW first so it releases its IDB connection
-    const regs = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(regs.map(r => r.unregister()));
-    // Now delete succeeds without being blocked
-    await new Promise(r => {
-      const req = indexedDB.deleteDatabase('$scramjet');
-      req.onsuccess = req.onerror = req.onblocked = r;
-    });
-    // Re-init with clean IDB, no SW running to interfere
-    await controller.init();
-    console.log('[2Fort] IDB reset successful');
+    if (!sessionStorage.getItem('sj-reset')) {
+      console.warn('[2Fort] IDB stale, resetting and reloading...');
+      sessionStorage.setItem('sj-reset', '1');
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+      await new Promise(r => {
+        const req = indexedDB.deleteDatabase('$scramjet');
+        req.onsuccess = req.onerror = req.onblocked = r;
+      });
+      location.reload();
+      return;
+    }
+    console.error('[2Fort] IDB still failing after reset, continuing...');
   }
 
   const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
   await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
 
-  // Only set __scramjet and fire scramjet-ready once SW is actually controlling
   if (navigator.serviceWorker.controller) {
     window.__scramjet = controller;
     console.log('[2Fort] Scramjet ready');
@@ -167,7 +168,7 @@
   } else {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       window.__scramjet = controller;
-      console.log('[2Fort] Scramjet ready (SW took control)');
+      console.log('[2Fort] Scramjet ready (after SW claim)');
       window.dispatchEvent(new Event('scramjet-ready'));
     }, { once: true });
   }
