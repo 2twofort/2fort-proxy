@@ -57,5 +57,8 @@ barUrl.addEventListener('keydown', e => { if (e.key === 'Enter') barGo(); });
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const target = params.get('url');
-  if (target) navigate(decodeURIComponent(target));
+  if (!target) return;
+  const go = () => navigate(decodeURIComponent(target));
+  if (window.__scramjet) go();
+  else window.addEventListener('scramjet-ready', go, { once: true });
 });
