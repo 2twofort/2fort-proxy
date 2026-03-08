@@ -129,6 +129,11 @@
 <script src="scramjet/scramjet.all.js"></script>
 <script>
 (async () => {
+  await new Promise(r => {
+    const req = indexedDB.deleteDatabase('$scramjet');
+    req.onsuccess = req.onerror = req.onblocked = r;
+  });
+
   const { ScramjetController } = $scramjetLoadController();
   const controller = new ScramjetController({
     prefix: '/2fort-proxy/service/',
@@ -139,24 +144,7 @@
     },
   });
 
-  try {
-    await controller.init();
-    sessionStorage.removeItem('sj-reset');
-  } catch(e) {
-    if (!sessionStorage.getItem('sj-reset')) {
-      console.warn('[2Fort] IDB stale, resetting and reloading...');
-      sessionStorage.setItem('sj-reset', '1');
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
-      await new Promise(r => {
-        const req = indexedDB.deleteDatabase('$scramjet');
-        req.onsuccess = req.onerror = req.onblocked = r;
-      });
-      location.reload();
-      return;
-    }
-    console.error('[2Fort] IDB still failing after reset, continuing...');
-  }
+  await controller.init();
 
   const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
   await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
