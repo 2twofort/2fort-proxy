@@ -142,12 +142,13 @@
       try {
         await controller.init();
       } catch(e) {
-        console.warn('[2Fort] IDB init failed, wiping and retrying...', e);
+        console.warn('[2Fort] IDB init failed, wiping and reloading...', e);
         await new Promise(r => {
-          const req = indexedDB.deleteDatabase('scramjet');
+          const req = indexedDB.deleteDatabase('$scramjet');
           req.onsuccess = req.onerror = req.onblocked = r;
         });
-        await controller.init();
+        location.reload();
+        return;
       }
 
       const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
