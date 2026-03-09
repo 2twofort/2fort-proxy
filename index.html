@@ -631,7 +631,18 @@
     checkSW();
     checkBackend();
   </script>
-  <script src="static/js/config.js"></script>
+<script src="static/js/config.js"></script>
   <script src="static/js/register-sw.js"></script>
+  <script>
+  (async () => {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map(r => r.unregister()));
+    await new Promise(r => {
+      const req = indexedDB.deleteDatabase('$scramjet');
+      req.onsuccess = r;
+      req.onerror = r;
+    });
+  })();
+  </script>
 </body>
 </html>
