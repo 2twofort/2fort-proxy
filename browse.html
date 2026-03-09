@@ -125,19 +125,32 @@
     document.getElementById('barLogo').src=LOGO;
     document.getElementById('splashLogo').src=LOGO;
   </script>
-<script src="scramjet/bare-mux.js"></script>
-<script src="scramjet/scramjet.all.js"></script>
 <script>
 (async () => {
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  // Step 1: kill old SW and wipe IDB BEFORE loading scramjet
   const regs = await navigator.serviceWorker.getRegistrations();
   await Promise.all(regs.map(r => r.unregister()));
-
   await new Promise(r => {
     const req = indexedDB.deleteDatabase('$scramjet');
     req.onsuccess = r;
     req.onerror = r;
   });
 
+  // Step 2: NOW load scramjet — IDB is clean
+  await loadScript('/2fort-proxy/scramjet/bare-mux.js');
+  await loadScript('/2fort-proxy/scramjet/scramjet.all.js');
+
+  // Step 3: init
   const { ScramjetController } = $scramjetLoadController();
   const controller = new ScramjetController({
     prefix: '/2fort-proxy/service/',
@@ -147,13 +160,15 @@
       sync: '/2fort-proxy/scramjet/scramjet.sync.js',
     },
   });
-
   await controller.init();
+  console.log('[2Fort] init OK');
 
   const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
   await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
+  console.log('[2Fort] transport OK');
 
   await navigator.serviceWorker.register('/2fort-proxy/proxy-sw.js', { scope: '/2fort-proxy/' });
+  console.log('[2Fort] SW registered');
 
   if (navigator.serviceWorker.controller) {
     window.__scramjet = controller;
