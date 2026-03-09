@@ -129,12 +129,13 @@
 <script src="scramjet/scramjet.all.js"></script>
 <script>
 (async () => {
+  const regs = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(regs.map(r => r.unregister()));
+
   await new Promise(r => {
     const req = indexedDB.deleteDatabase('$scramjet');
     req.onsuccess = r;
     req.onerror = r;
-    req.onblocked = r;
-    setTimeout(r, 2000);
   });
 
   const { ScramjetController } = $scramjetLoadController();
@@ -148,23 +149,18 @@
   });
 
   await controller.init();
-  console.log('[2Fort] init OK');
 
   const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
   await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
-  console.log('[2Fort] transport OK');
 
   await navigator.serviceWorker.register('/2fort-proxy/proxy-sw.js', { scope: '/2fort-proxy/' });
-  console.log('[2Fort] SW registered');
 
   if (navigator.serviceWorker.controller) {
     window.__scramjet = controller;
-    console.log('[2Fort] Scramjet ready');
     window.dispatchEvent(new Event('scramjet-ready'));
   } else {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       window.__scramjet = controller;
-      console.log('[2Fort] Scramjet ready (after claim)');
       window.dispatchEvent(new Event('scramjet-ready'));
     }, { once: true });
   }
