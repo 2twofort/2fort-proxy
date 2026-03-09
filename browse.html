@@ -127,58 +127,74 @@
   </script>
 <script>
 (async () => {
+
   function loadScript(src) {
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = src;
-      s.onload = resolve;
-      s.onerror = reject;
+      s.src = src; s.onload = resolve; s.onerror = reject;
       document.head.appendChild(s);
     });
   }
 
-  // Step 1: kill old SW and wipe IDB BEFORE loading scramjet
-  const regs = await navigator.serviceWorker.getRegistrations();
-  await Promise.all(regs.map(r => r.unregister()));
-  await new Promise(r => {
-    const req = indexedDB.deleteDatabase('$scramjet');
-    req.onsuccess = r;
-    req.onerror = r;
-  });
+  async function doInit() {
+    await loadScript('/2fort-proxy/scramjet/bare-mux.js');
+    await loadScript('/2fort-proxy/scramjet/scramjet.all.js');
 
-  // Step 2: NOW load scramjet — IDB is clean
-  await loadScript('/2fort-proxy/scramjet/bare-mux.js');
-  await loadScript('/2fort-proxy/scramjet/scramjet.all.js');
+    const { ScramjetController } = $scramjetLoadController();
+    const controller = new ScramjetController({
+      prefix: '/2fort-proxy/service/',
+      files: {
+        wasm: '/2fort-proxy/scramjet/scramjet.wasm.wasm',
+        all:  '/2fort-proxy/scramjet/scramjet.all.js',
+        sync: '/2fort-proxy/scramjet/scramjet.sync.js',
+      },
+    });
 
-  // Step 3: init
-  const { ScramjetController } = $scramjetLoadController();
-  const controller = new ScramjetController({
-    prefix: '/2fort-proxy/service/',
-    files: {
-      wasm: '/2fort-proxy/scramjet/scramjet.wasm.wasm',
-      all:  '/2fort-proxy/scramjet/scramjet.all.js',
-      sync: '/2fort-proxy/scramjet/scramjet.sync.js',
-    },
-  });
-  await controller.init();
-  console.log('[2Fort] init OK');
+    await controller.init();
+    console.log('[2Fort] init OK');
 
-  const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
-  await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
-  console.log('[2Fort] transport OK');
+    const connection = new BareMux.BareMuxConnection('/2fort-proxy/scramjet/bare-mux-worker.js');
+    await connection.setTransport('/2fort-proxy/scramjet/libcurl.mjs', [{ websocket: 'wss://proxy.2fort.lol/wisp/' }]);
+    console.log('[2Fort] transport OK');
 
-  await navigator.serviceWorker.register('/2fort-proxy/proxy-sw.js', { scope: '/2fort-proxy/' });
-  console.log('[2Fort] SW registered');
+    await navigator.serviceWorker.register('/2fort-proxy/proxy-sw.js', { scope: '/2fort-proxy/' });
+    console.log('[2Fort] SW registered');
 
-  if (navigator.serviceWorker.controller) {
-    window.__scramjet = controller;
-    window.dispatchEvent(new Event('scramjet-ready'));
-  } else {
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (navigator.serviceWorker.controller) {
       window.__scramjet = controller;
       window.dispatchEvent(new Event('scramjet-ready'));
-    }, { once: true });
+    } else {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.__scramjet = controller;
+        window.dispatchEvent(new Event('scramjet-ready'));
+      }, { once: true });
+    }
   }
+
+  // If we just reloaded after a cleanup, go straight to init
+  if (sessionStorage.getItem('sj-cleaned') === '1') {
+    sessionStorage.removeItem('sj-cleaned');
+    await doInit();
+    return;
+  }
+
+  // If there's any SW alive, kill it and reload clean
+  const regs = await navigator.serviceWorker.getRegistrations();
+  if (regs.length > 0 || navigator.serviceWorker.controller) {
+    await Promise.all(regs.map(r => r.unregister()));
+    await new Promise(r => {
+      const req = indexedDB.deleteDatabase('$scramjet');
+      req.onsuccess = r; req.onerror = r; req.onblocked = r;
+      setTimeout(r, 2000);
+    });
+    sessionStorage.setItem('sj-cleaned', '1');
+    location.reload();
+    return;
+  }
+
+  // No SW at all — clean state, init directly
+  await doInit();
+
 })();
 </script>
 <script src="static/js/browse.js"></script>
