@@ -69,12 +69,15 @@ function saveAppearance() {
   const cfg = getConfig();
   cfg.cloakTitle = document.getElementById('cloakTitle').value.trim();
   cfg.cloakIcon  = document.getElementById('cloakIcon').value;
-  cfg.scanlines  = document.getElementById('togScanlines').checked;
+  const togScan  = document.getElementById('togScanlines');
+  if (togScan) cfg.scanlines = togScan.checked;
   setConfig(cfg);
-  // Apply immediately
   if (cfg.cloakTitle) document.title = cfg.cloakTitle;
+  let fav = document.querySelector("link[rel='icon']");
+  if (!fav) { fav = document.createElement('link'); fav.rel = 'icon'; document.head.appendChild(fav); }
+  fav.href = cfg.cloakIcon || '';
   const scanEl = document.querySelector('.scanlines');
-  if (scanEl) scanEl.style.display = cfg.scanlines ? '' : 'none';
+  if (scanEl) scanEl.style.display = (cfg.scanlines !== false) ? '' : 'none';
   showToast('APPEARANCE SAVED', 'ok');
 }
 
