@@ -8,7 +8,11 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 
 self.addEventListener('fetch', (event) => {
   event.respondWith((async () => {
-    await scramjet.loadConfig();
+    try {
+      await scramjet.loadConfig();
+    } catch (e) {
+      return fetch(event.request);
+    }
     if (scramjet.route(event)) {
       return scramjet.fetch(event);
     }
