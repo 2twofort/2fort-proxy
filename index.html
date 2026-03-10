@@ -607,7 +607,7 @@ document.head.appendChild(_fav);
       if (!cfg.backendUrl) { txt.textContent = 'Backend: —'; return; }
       txt.textContent = 'Backend: …';
       try {
-        const r = await fetch(cfg.backendUrl + '/', { signal: AbortSignal.timeout(4000) });
+        const r = await fetch(cfg.backendUrl + '/2fort-proxy/', { signal: AbortSignal.timeout(4000) });
         if (r.ok || r.status < 500) { dot.classList.add('ok'); txt.textContent = 'Backend: OK'; }
         else throw new Error();
       } catch { dot.classList.add('bad'); txt.textContent = 'Backend: Down'; }
